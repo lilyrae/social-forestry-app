@@ -3,6 +3,7 @@ package com.example.lily.socialforestryapp;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager mViewPager;
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final int PICK_IMAGE_REQUEST = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,6 +136,24 @@ public class MainActivity extends AppCompatActivity {
             TextView buttonView = (TextView) rootView.findViewById(R.id.button);
             buttonView.setText(helper.getButtonText());
 
+            Button galleryButton = (Button) rootView.findViewById(R.id.buttonGallery);
+
+            if(helper.getSectionNumber() != 1) {
+                galleryButton.setVisibility(View.GONE);
+            } else {
+                galleryButton.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+
+                        Intent intent = new Intent();
+                        // Show only images, no videos or anything else
+                        intent.setType("image/*");
+                        intent.setAction(Intent.ACTION_GET_CONTENT);
+                        // Always show the chooser (if there are multiple options available)
+                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+                    }
+                });
+            }
+
             Button button = (Button) rootView.findViewById(R.id.button);
             button.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -197,6 +217,30 @@ public class MainActivity extends AppCompatActivity {
                 Intent uploadImageIntent = new Intent(getActivity(), UploadPlantImageActivity.class);
                 uploadImageIntent.putExtra("path", lastPhotoPath);
                 startActivity(uploadImageIntent);
+            }
+
+            if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+
+                Uri uri = data.getData();
+                String realPath = getFilePathFromUri(uri);
+                Intent uploadImageIntent = new Intent(getActivity(), UploadPlantImageActivity.class);
+
+                uploadImageIntent.putExtra("path", realPath);
+                startActivity(uploadImageIntent);
+            }
+        }
+
+        private String getFilePathFromUri(Uri uri) {
+            if (Build.VERSION.SDK_INT < 11) {
+                return RealPathUtil.getRealPathFromURI_BelowAPI11(getActivity(), uri);
+            }
+            // SDK >= 11 && SDK < 19
+            else if (Build.VERSION.SDK_INT < 19) {
+                return RealPathUtil.getRealPathFromURI_API11to18(getActivity(), uri);
+            }
+            // SDK > 19 (Android 4.4)
+            else {
+                return RealPathUtil.getRealPathFromURI_API19(getActivity(), uri);
             }
         }
 

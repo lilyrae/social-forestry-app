@@ -5,8 +5,6 @@
     android:layout_height="match_parent"
     tools:context="com.example.lily.socialforestryapp.MainActivity$PlaceholderFragment">
 
-
-
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
@@ -61,6 +59,16 @@
         android:layout_marginBottom="81dp"
         app:srcCompat="@drawable/white"
         android:text="Button"
+        android:layout_alignBottom="@+id/imageViewSquare"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:id="@+id/buttonGallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        app:srcCompat="@drawable/white"
+        android:text="Gallery"
         android:layout_alignBottom="@+id/imageViewSquare"
         android:layout_centerHorizontal="true" />
 
