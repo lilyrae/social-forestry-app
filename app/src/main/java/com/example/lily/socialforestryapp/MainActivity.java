@@ -1,15 +1,19 @@
 package com.example.lily.socialforestryapp;
 
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,10 +21,14 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.sql.Array;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+
+    static final int REQUEST_IMAGE_CAPTURE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     /**
      * A placeholder fragment containing a simple view.
      */
@@ -86,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
          * fragment.
          */
         private static final String ARG_SECTION_NUMBER = "section_number";
+        private String lastPhotoPath;
 
         public PlaceholderFragment() {
         }
@@ -125,26 +137,77 @@ public class MainActivity extends AppCompatActivity {
             Button button = (Button) rootView.findViewById(R.id.button);
             button.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    switch(helper.getButtonText()) {
-                        case "Shopping Cart": ExecuteShoppingButtonFunction2(); break;
-                        case "Camera": ExecuteCameraButtonFunction(); break;
-                        case "Person Icon": ExecuteLoginButtonFunction(); break;
+                    switch(helper.getSectionNumber()) {
+                        case 0: ExecuteShoppingButtonFunction(); break;
+                        case 1: ExecuteCameraButtonFunction(); break;
+                        case 2: ExecuteLoginButtonFunction(); break;
                     }
                 }
             });
         }
 
-        void ExecuteShoppingButtonFunction2() {
+        void ExecuteShoppingButtonFunction() {
             Toast.makeText(getContext(), "Shopping is my life", Toast.LENGTH_SHORT).show();
         }
 
         void ExecuteCameraButtonFunction() {
             Toast.makeText(getContext(), "Smile for the camera", Toast.LENGTH_SHORT).show();
+            dispatchTakePictureIntent();
         }
 
         void ExecuteLoginButtonFunction() {
             Toast.makeText(getContext(), "Welcome to my world", Toast.LENGTH_SHORT).show();
         }
+
+        private void dispatchTakePictureIntent() {
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                // Create the File where the photo should go
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                    if (photoFile != null) {
+                        Uri photoURI = FileProvider.getUriForFile(getActivity(),
+                                "com.example.lily.socialforestryapp.fileprovider",
+                                photoFile);
+                        lastPhotoPath = photoFile.getAbsolutePath();
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                    }
+                } catch (IOException ex) {
+                    // Error occurred while creating the File
+                }
+
+            }
+        }
+
+        private File createImageFile() throws IOException {
+            // Create an image file name
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String imageFileName = "diseased_plant_" + timeStamp;
+            File storageDirectory = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            File image = File.createTempFile(imageFileName, ".jpg", storageDirectory);
+            return image;
+        }
+
+        @Override
+         public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+                galleryAddPic(lastPhotoPath);
+                Intent uploadImageIntent = new Intent(getActivity(), UploadPlantImageActivity.class);
+                uploadImageIntent.putExtra("path", lastPhotoPath);
+                startActivity(uploadImageIntent);
+            }
+        }
+
+        private void galleryAddPic(String path) {
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            File f = new File(path);
+            Uri contentUri = Uri.fromFile(f);
+            mediaScanIntent.setData(contentUri);
+            getActivity().sendBroadcast(mediaScanIntent);
+        }
+
     }
 
     public static class FragmentHelper {
@@ -153,6 +216,10 @@ public class MainActivity extends AppCompatActivity {
 
         public FragmentHelper(int sectionNumber) {
             _sectionNumber = sectionNumber;
+        }
+
+        public int getSectionNumber() {
+            return _sectionNumber;
         }
 
         public String getTitle() {
