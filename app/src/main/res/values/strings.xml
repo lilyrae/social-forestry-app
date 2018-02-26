@@ -2,4 +2,7 @@
     <string name="app_name">SocialForestryApp</string>
     <string name="action_settings">Settings</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="api_root">http://192.168.100.3:8000/api/</string>
+    <string name="api_image_upload_path">plant/diseased/image</string>
+    <string name="api_image_details_path">plant/diseased/image/details</string>
 </resources>
